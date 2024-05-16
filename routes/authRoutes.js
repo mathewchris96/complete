@@ -34,10 +34,8 @@ router.post('/register', async (req, res) => {
     }
     const user = new User({ username, password, email, domainOfInterest, linkedinUrl, currentCompany, currentLevel });
     await user.save();
-    // Generate and send OTP
-    await user.generateAndSendOtp(); // Assuming this method is implemented in User.js
     req.session.userId = user._id;
-    res.json({ message: 'Registration successful. OTP sent to email.', userId: user._id }); // Modify response to indicate OTP sent
+    res.redirect('/login'); // Modified line: Redirecting user to login page after successful registration
   } catch (error) {
     res.status(500).json({ message: 'Error registering user', error: error.message });
   }
@@ -71,30 +69,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/verify-otp', async (req, res) => {
-  const { userId, otp } = req.body;
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    const isVerified = await user.verifyOtp(otp); // Assuming this method is implemented in User.js
-    if (isVerified) {
-      res.json({ message: 'OTP verification successful' });
-    } else {
-      res.status(400).json({ message: 'Invalid or expired OTP' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Error verifying OTP', error: error.message });
-  }
-});
-
 router.get('/logout', requireAuth, (req, res) => {
   req.session.destroy(err => {
     if (err) {
       return res.status(500).json({ message: 'Error logging out', error: err });
     }
     res.clearCookie('connect.sid');
+    // Modified line: Redirecting user to index page after successful logout
     res.redirect('/');
   });
 });
@@ -119,5 +100,6 @@ router.get('/profile', requireAuth, async (req, res) => {
     res.status(500).render('error', { message: 'Error retrieving user data', error: error.message });
   }
 });
+
 
 module.exports = router;

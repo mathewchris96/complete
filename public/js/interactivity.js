@@ -95,69 +95,23 @@ function handleLogin(username, password) {
 }
 
 function updateProfile(profileData) {
-  if (!validateEmail(profileData.email)) {
-    alert('Please enter a valid email address.');
-    return;
-  }
-
-  fetch('/api/user/trigger-otp', {
+  fetch('/api/user/profile', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ email: profileData.email })
+    body: JSON.stringify(profileData)
   })
-  .then((response) => response.json())
-  .then((data) => {
-    if (data.otpSent) {
-      const otp = prompt('An OTP has been sent to your email. Please enter it here:');
-      verifyOTP(profileData, otp);
-    } else {
-      alert('Failed to send OTP. Please try again.');
-    }
-  })
-  .catch((error) => {
-    console.error('Error triggering OTP:', error);
-    alert('An unexpected error occurred. Please try again later.');
-  });
-}
-
-function verifyOTP(profileData, otp) {
-  fetch('/api/user/verify-otp', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email: profileData.email, otp: otp })
-  })
-  .then((response) => response.json())
-  .then((data) => {
-    if (data.otpVerified) {
-      fetch('/api/user/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(profileData)
-      })
-      .then((response) => response.json())
-      .then((data) => {
-        alert(data.message);
-        if (data.message === 'Profile updated successfully') {
-          window.location.reload();
-        }
-      })
-      .catch((error) => {
-        console.error('Error updating profile:', error);
-      });
-    } else {
-      alert('OTP verification failed. Please try again.');
-    }
-  })
-  .catch((error) => {
-    console.error('Error verifying OTP:', error);
-    alert('An unexpected error occurred. Please try again later.');
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      alert(data.message);
+      if (data.message === 'Profile updated successfully') {
+        window.location.reload();
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
 }
 
 function submitJobPosting(jobData) {
