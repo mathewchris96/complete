@@ -39,12 +39,19 @@ document.addEventListener('DOMContentLoaded', function() {
     e.preventDefault();
     window.location.href = '/jobpost';
   });
+
+  document.getElementById('checkCompatibilityBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const jobId = this.getAttribute('data-job-id');
+    checkJobCompatibility(jobId);
+  });
 });
 
 const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 const { requireAuth } = require('./middleware/authMiddleware');
+const { calculateCompatibility } = require('./compatibilityModel.js');
 
 function applyJob(body) {
   fetch('/jobpost', {
@@ -115,6 +122,17 @@ function updateProfile(profileData) {
 }
 
 function submitJobPosting(jobData) {
+  // Adding event listener to make submitJobPosting function accessible
+  document.getElementById('postJobBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    submitJobPosting({
+      jobTitle: document.getElementById('jobTitle').value,
+      jobDescription: document.getElementById('jobDescription').value,
+      jobRequirements: document.getElementById('jobRequirements').value,
+      jobCategory: document.getElementById('jobCategory').value
+    });
+  }); 
+
   if (!jobData.jobTitle || !jobData.jobDescription || !jobData.jobRequirements || !jobData.jobCategory) {
     alert('Please fill in all required fields.');
     return;
@@ -147,3 +165,19 @@ function validateEmail(email) {
   const re = /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(email);
 }
+
+function checkJobCompatibility(jobId) {
+  Promise.all([
+    fetch('/api/user/profile').then(response => response.json()),
+    fetch(`/api/jobs/${jobId}`).then(response => response.json())
+  ])
+  .then(([userProfile, jobDescription]) => {
+    const compatibilityScore = calculateCompatibility(userProfile.skills, jobDescription.skillsRequired);
+    alert(`Your compatibility score for this job is: ${compatibilityScore}`);
+  })
+  .catch(error => {
+    console.error('Error fetching data:', error);
+    alert('An error occurred while checking job compatibility. Please try again.');
+  });
+}
+```
