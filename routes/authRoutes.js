@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const { requireAuth, alreadyLoggedIn } = require('./middleware/authMiddleware');
 
@@ -35,7 +36,7 @@ router.post('/register', async (req, res) => {
     const user = new User({ username, password, email, domainOfInterest, linkedinUrl, currentCompany, currentLevel });
     await user.save();
     req.session.userId = user._id;
-    res.redirect('/login'); // Modified line: Redirecting user to login page after successful registration
+    res.redirect('/login');
   } catch (error) {
     res.status(500).json({ message: 'Error registering user', error: error.message });
   }
@@ -51,7 +52,7 @@ router.post('/login', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Incorrect password' });
     }
@@ -75,7 +76,6 @@ router.get('/logout', requireAuth, (req, res) => {
       return res.status(500).json({ message: 'Error logging out', error: err });
     }
     res.clearCookie('connect.sid');
-    // Modified line: Redirecting user to index page after successful logout
     res.redirect('/');
   });
 });
@@ -100,6 +100,5 @@ router.get('/profile', requireAuth, async (req, res) => {
     res.status(500).render('error', { message: 'Error retrieving user data', error: error.message });
   }
 });
-
 
 module.exports = router;
