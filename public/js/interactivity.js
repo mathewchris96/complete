@@ -1,4 +1,3 @@
-document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -83,7 +82,7 @@ function handleLogin(username, password) {
     .then((response) => response.json())
     .then((data) => {
       if (data.message === 'Login successful') {
-        window.location.href = '/profile';
+        window.location.href = '/jobs';
       } else {
         alert(data.message);
       }
