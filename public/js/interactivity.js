@@ -1,4 +1,3 @@
-document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -38,6 +37,19 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('a[href="#HireWithUpWork"]').addEventListener('click', function(e) {
     e.preventDefault();
     window.location.href = '/jobpost';
+  });
+
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('jpegFile');
+    const file = fileInput.files[0];
+
+    if (!file || file.type !== 'image/jpeg') {
+      alert('Please upload a valid JPEG file.');
+      return;
+    }
+
+    handleFormSubmission(e);
   });
 });
 
@@ -146,4 +158,28 @@ function submitJobPosting(jobData) {
 function validateEmail(email) {
   const re = /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(email);
+}
+
+function handleFormSubmission(e) {
+  const formData = new FormData(e.target);
+  fetch('/convert', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Conversion successful! Download your PDF.');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = data.downloadUrl;
+        downloadLink.textContent = 'Download PDF';
+        document.body.appendChild(downloadLink);
+      } else {
+        alert('Conversion failed: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error during conversion:', error);
+      alert('An error occurred during conversion. Please try again.');
+    });
 }

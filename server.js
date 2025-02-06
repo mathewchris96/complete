@@ -1,4 +1,3 @@
-const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -10,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes');
+const jpegToPdfRoute = require('./routes/jpegToPdfRoute');
 
 mongoose.connect(process.env.DB_CONNECTION_STRING, {
   useNewUrlParser: true,
@@ -32,6 +32,7 @@ app.set('view engine', 'ejs');
 
 app.use(authRoutes);
 app.use(jobRoutes);
+app.use('/convert_jpeg_to_pdf', jpegToPdfRoute);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
