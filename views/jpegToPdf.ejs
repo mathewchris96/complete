@@ -1,0 +1,85 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css">
+    <title>JPEG to PDF Converter</title>
+</head>
+<body>
+    <div class="container">
+        <h1>JPEG to PDF Converter</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <label for="jpegFile">Upload JPEG File:</label>
+            <input type="file" id="jpegFile" name="jpegFile" accept="image/jpeg" required>
+            <button type="submit">Convert to PDF</button>
+        </form>
+        <div id="downloadLink" style="display: none;">
+            <h2>Download your PDF:</h2>
+            <a id="pdfLink" href="#" download>Download PDF</a>
+        </div>
+    </div>
+    <script src="interactivity.js"></script>
+    <script>
+        import { handleFormSubmission } from './interactivity.js';
+        document.getElementById('uploadForm').addEventListener('submit', handleFormSubmission);
+    </script>
+</body>
+</html>
+```
+
+```javascript
+// interactivity.js
+
+export function handleFormSubmission(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    
+    fetch('/convert', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const downloadLink = document.getElementById('downloadLink');
+            const pdfLink = document.getElementById('pdfLink');
+            pdfLink.href = data.pdfUrl;
+            downloadLink.style.display = 'block';
+        } else {
+            alert('Conversion failed. Please try again.');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+```
+
+```javascript
+// server.js
+
+const express = require('express');
+const multer = require('multer');
+const { convertJpegToPdf } = require('./conversionService');
+const path = require('path');
+
+const app = express();
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/convert', upload.single('jpegFile'), (req, res) => {
+    const jpegFilePath = req.file.path;
+    const pdfFilePath = path.join('converted', `${req.file.filename}.pdf`);
+
+    convertJpegToPdf(jpegFilePath, pdfFilePath)
+        .then(() => {
+            res.json({ success: true, pdfUrl: `/converted/${req.file.filename}.pdf` });
+        })
+        .catch(err => {
+            console.error(err);
+            res.json({ success: false });
+        });
+});
+
+app.use('/converted', express.static(path.join(__dirname, 'converted')));
+
+app.listen(3000, () => {
+    console.log('Server is running on port 3000');
+});
